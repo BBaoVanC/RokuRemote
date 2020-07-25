@@ -8,35 +8,17 @@ Program to control a Roku using your computer
 """
 
 # Imports
-import urllib  # Used here for percent encoding
 from multiprocessing.dummy import Pool  # Used for async requests
 
+import urllib  # Used here for percent encoding
 import readchar  # Library to read single characters of input
 import requests  # Library to easily send HTTP requests
 import time  # Used for pauses
 
+import layouts
+
 pool = Pool(50)  # Create async task pool
 host = input("Enter IP of the Roku you want to control: ")  # Ask for the IP of the Roku to control
-buttonmap = {
-    "h": "Left",
-    "j": "Down",
-    "k": "Up",
-    "l": "Right",
-    "n": "Select",
-    "p": "InstantReplay",
-    "o": "Info",
-    "b": "Rev",
-    "y": "Fwd",
-    "g": "Play",
-    "u": "Back",
-    "m": "Home",
-    "x": "Power",
-    "8": "VolumeDown",
-    "9": "VolumeUp",
-    "0": "VolumeMute",
-    ",": "ChannelDown",
-    ".": "ChannelUp",
-}
 
 secretmap = {
     "menu1": "mmmmmyyybb",
@@ -61,8 +43,8 @@ def sendseq(seq):
     if len(seq) > 0:  # Ensure there's a sequence to send
         print("Running sequence: {0}".format(seq))  # Inform user of the sequence being run
         for b in seq:
-            if b in buttonmap.keys():  # Ensure the current button is in the dictionar of buttons
-                bsend = buttonmap[b]  # Figure out the name of the button to press
+            if b in layout.buttonmap.keys():  # Ensure the current button is in the dictionar of buttons
+                bsend = layout.buttonmap[b]  # Figure out the name of the button to press
                 sendbutton("keypress", bsend)  # Press the button
                 time.sleep(0.5)  # Wait a half second before sending the next button in the sequence
 
@@ -84,8 +66,7 @@ def sendsearch(rawquery):
 
 run = True  # Variable that says if the program should continue running
 mode = "normal"  # Set the mode to normal (default)
-validlayouts = ["default"]  # List of valid keyboard shortcut layouts
-layout = "default"  # Set the keyboard layout
+layout = layouts.load("layouts.default")
 
 while run:  # Main program loop
     if mode == "command":
@@ -96,23 +77,32 @@ while run:  # Main program loop
             cmd = splitcmd[0]
         else:  # If no command was typed
             cmd = ""
-        if len(splitcmd) > 0:  # If any arguments were provided
+        if len(splitcmd) > 1:  # If any arguments were provided
             args = splitcmd[1]
         else:  # If no arguments were provied
-            args = []
+            args = ""
+
         if cmd == "q" or cmd == "quit":
             run = False  # Prevent the main program loop from executing again (ending the program)
-        if cmd == "layout":
-            if len(args) > 0:  # If an argument was provided
-                if args[0] in validlayouts:  # If the requested layout is valid
-                    layout = args[0]  # Change layout
-                    print("layout set to {0}".format(layout))
+        elif cmd == "setlayout":
+            if len(args) > 0:
+                if not args.startswith("layouts."):
+                    args2 = "layouts.{0}".format(args)
                 else:
-                    print("ERR: Invalid layout. Valid layouts: {0}".format(validlayouts))
-                    print("Current layout: {0}".format(layout))
+                    args2 = args
+                try:
+                    layout = layouts.load(args2)
+                except ModuleNotFoundError as e:
+                    print("ERR: ModuleNotFoundError - error information below:")
+                    print(e)
             else:
-                print("ERR: Invalid layout. Valid layouts: {0}".format(validlayouts))
-                print("Current layout: {0}".format(layout))
+                print("ERR: No layout specified.")
+                print("Current layout: {0}".format(layout.name))
+                print("List all layouts by typing :layouts")
+
+        elif cmd == "layouts":
+            print("Valid layouts: {0}".format(layouts.getlist()))
+            print("Use :setlayout to change layouts.")
 
         elif cmd == "search":
             sendsearch(args)
@@ -140,7 +130,7 @@ while run:  # Main program loop
             print("-- NORMAL MODE (press q to quit) --")
         else:
             print("-- INVALID MODE: Please report this error! --")
-        char = readchar.readchar()  # Read a single character
+        char = readchar.readkey()  # Read a single character
         print("Read: {0}".format(char))
 
         if mode == "insert":
@@ -161,8 +151,8 @@ while run:  # Main program loop
             if char == "q":  # Quit command
                 run = False  # Prevent the main program loop from running again
 
-            elif char in buttonmap.keys():  # If the character is in the dictionary of shortcuts
-                sendbutton("keypress", buttonmap[char])  # Press the button
+            elif char in layout.buttonmap.keys():  # If the character is in the dictionary of shortcuts
+                sendbutton("keypress", layout.buttonmap[char])  # Press the button
 
             elif char == "i":  # Insert mode
                 mode = "insert"
