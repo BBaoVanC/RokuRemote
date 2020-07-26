@@ -20,19 +20,6 @@ import layouts
 pool = Pool(50)  # Create async task pool
 host = input("Enter IP of the Roku you want to control: ")  # Ask for the IP of the Roku to control
 
-secretmap = {
-    "menu1": "mmmmmyyybb",
-    "menu2": "mmmmmkljhk",  # Doesn't work
-    "wifi": "mmmmmkjkjk",  # Doesn't work
-    "platform": "mmmmmygbgy",  # Doesn't work
-    "antenna": "mmmmmyjbjy",  # Doesn't work
-    "bitrate": "mmmmmbbbyy",  # Doesn't work
-    "developer": "mmmkklhlhl",  # Doesn't work
-    "channelinfo": "mmmkkhlhlh",
-    "network": "mmmmmlhlhl",  # Doesn't work
-    "reboot": "mmmmmkbbyy",  # Doesn't work
-}
-
 
 def on_error(error):  # Called when an error occurs in HTTP requests
     print("POST ERROR")
@@ -112,12 +99,6 @@ while run:  # Main program loop
                 sendseq(args)
             else:
                 print("ERR: No normal mode sequence specified")
-
-        elif cmd == "secret":
-            if len(args) > 0:
-                sendseq(secretmap[args])
-            else:
-                print("ERR: No secret menu specified. Valid menus: {0}".format(list(secretmap.keys())))
 
         else:
             print("ERR: Invalid command.")
