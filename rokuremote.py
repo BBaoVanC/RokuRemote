@@ -57,11 +57,27 @@ def commands(arg=None):
     print("Valid commands: {0}".format(", ".join(map(str, commandmap.keys()))))
 
 
+def layout(arg=None):
+    laylist = layouts.getlist()
+    print("Type the number corresponding to the layout you want to use:")
+    for a in range(len(laylist)):
+        print("[{0}] {1}".format(a, laylist[a]))
+
+    sel = input("> ")
+    selint = int(sel)
+    if selint in list(range(len(laylist))):
+        print("Selected: {0}".format(laylist[selint]))
+        setlayout(laylist[selint])
+    else:
+        print("Invalid selection.")
+
+
 commandmap = {
     "setlayout": setlayout,
     "listlayouts": listlayouts,
     "search": search,
     "commands": commands,
+    "layout": layout,
 }
 # End of functions for command mode
 
@@ -75,7 +91,6 @@ run = True  # Variable that says if the program should continue running
 mode = "normal"  # Set the mode to normal (default)
 layout = layouts.load("layouts.default")
 host = input("Enter IP of the Roku you want to control: ")  # Ask for the IP of the Roku to control
-
 
 while run:  # Main program loop
     if mode == "command":
