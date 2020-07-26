@@ -12,10 +12,10 @@ from multiprocessing.dummy import Pool  # Used for async requests
 
 import urllib  # Used here for percent encoding
 import readchar  # Library to read single characters of input
-import requests  # Library to easily send HTTP requests
 import time  # Used for pauses
 
 import layouts
+import libroku
 
 pool = Pool(50)  # Create async task pool
 host = input("Enter IP of the Roku you want to control: ")  # Ask for the IP of the Roku to control
@@ -24,31 +24,6 @@ host = input("Enter IP of the Roku you want to control: ")  # Ask for the IP of 
 def on_error(error):  # Called when an error occurs in HTTP requests
     print("POST ERROR")
     print(error)
-
-
-def sendseq(seq):
-    if len(seq) > 0:  # Ensure there's a sequence to send
-        print("Running sequence: {0}".format(seq))  # Inform user of the sequence being run
-        for b in seq:
-            if b in layout.buttonmap.keys():  # Ensure the current button is in the dictionar of buttons
-                bsend = layout.buttonmap[b]  # Figure out the name of the button to press
-                sendbutton("keypress", bsend)  # Press the button
-                time.sleep(0.5)  # Wait a half second before sending the next button in the sequence
-
-
-def sendbutton(action, button):
-    pressurl = "http://{0}:8060/{1}/{2}".format(host, action, button)  # The url to POST to
-    pool.apply_async(requests.post, args=(pressurl,),
-                     error_callback=on_error)  # Asynchronously send the POST request
-    print("Sent: {0}/{1}".format(action, button))  # Inform the user of the request that has just been sent
-
-
-def sendsearch(rawquery):
-    query = urllib.parse.quote(rawquery)  # Percent enccode any characters that need to be encoded
-    searchurl = "http://{0}:8060/search/browse?keyword={1}".format(host, query)
-    pool.apply_async(requests.post, args=(searchurl,),
-                     error_callback=on_error)  # Asynchronously send the POST request
-    print("Searching for: {0}".format(query))  # Inform the user of the request that has just been sent
 
 
 run = True  # Variable that says if the program should continue running
@@ -92,7 +67,7 @@ while run:  # Main program loop
             print("Use :setlayout to change layouts.")
 
         elif cmd == "search":
-            sendsearch(args)
+            libroku.sendsearch(pool, host, args, on_error)
 
         elif cmd == "norm":
             if len(args) > 0:
@@ -117,23 +92,24 @@ while run:  # Main program loop
         if mode == "insert":
             if char == "\r" or char == "\n":  # If enter was pressed
                 mode = "normal"
-            elif char == "\x7f":  # If backspace was pressed
-                sendbutton("keypress", "Backspace")
             else:
                 if len(char) == 1 and char.isalpha():
                     typechar = "LIT_" + char
-                    sendbutton("keypress", typechar)
+                    libroku.sendbutton(pool, host, "keypress", typechar, on_error)
                 else:
                     pchar = urllib.parse.quote(char)  # Percent encode the character (if needed)
                     print("ENCODED: '{0}'".format(pchar))
-                    typechar = "LIT_" + pchar
-                    sendbutton("keypress", typechar)
+                    if pchar == "%7F" or pchar == "%08":
+                        libroku.sendbutton(pool, host, "keypress", "Backspace", on_error)
+                    else:
+                        typechar = "LIT_" + pchar
+                        libroku.sendbutton(pool, host, "keypress", typechar, on_error)
         elif mode == "normal":
             if char == "q":  # Quit command
                 run = False  # Prevent the main program loop from running again
 
             elif char in layout.buttonmap.keys():  # If the character is in the dictionary of shortcuts
-                sendbutton("keypress", layout.buttonmap[char])  # Press the button
+                libroku.sendbutton(pool, host, "keypress", layout.buttonmap[char], on_error)  # Press the button
 
             elif char == "i":  # Insert mode
                 mode = "insert"
@@ -142,4 +118,4 @@ while run:  # Main program loop
                 mode = "command"
 
             elif char == "/":  # Open Roku search menu
-                sendbutton("search", "browse")  # Open the Roku search menu
+                libroku.sendbutton(pool, host, "search", "browse", on_error)  # Open the Roku search menu
