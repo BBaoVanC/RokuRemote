@@ -13,12 +13,18 @@ from multiprocessing.dummy import Pool  # Used for async requests
 import urllib  # Used here for percent encoding
 import readchar  # Library to read single characters of input
 import pprint
+import os
 
 import layouts
 import libroku
 
 pool = Pool(50)  # Create async task pool
 pprinter = pprint.PrettyPrinter(indent=4)
+
+if not os.path.isfile("defaultlayout.txt"):
+    print("defaultlayout.txt not found! Creating...")
+    with open("defaultlayout.txt", "w+") as f:
+        f.write("layouts.default")
 
 
 def on_error(error):  # Called when an error occurs in HTTP requests
@@ -107,6 +113,13 @@ def viewlayout(view):
         pprinter.pprint(layout.buttonmap)
 
 
+def setdefaultlayout(arg=None):
+    global layout
+    with open("defaultlayout.txt", "w") as f:
+        f.write("layouts.{0}".format(layout.name))
+    print("Default layout set to {0}".format(layout.name))
+
+
 commandmap = {
     "setlayout": setlayout,
     "listlayouts": listlayouts,
@@ -114,6 +127,7 @@ commandmap = {
     "commands": commands,
     "chooselayout": chooselayout,
     "viewlayout": viewlayout,
+    "setdefaultlayout": setdefaultlayout,
 }
 # End of functions for command mode
 
@@ -125,7 +139,10 @@ modemap = {
 
 run = True  # Variable that says if the program should continue running
 mode = "normal"  # Set the mode to normal (default)
-layout = layouts.load("layouts.default")
+with open("defaultlayout.txt", "r") as f:
+    deflayname = f.readlines()[0].strip()
+    print("Loading default layout: {0}".format(deflayname))
+    layout = layouts.load(deflayname)
 host = input("Enter IP of the Roku you want to control: ")  # Ask for the IP of the Roku to control
 
 while run:  # Main program loop
