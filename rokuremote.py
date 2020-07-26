@@ -12,11 +12,13 @@ from multiprocessing.dummy import Pool  # Used for async requests
 
 import urllib  # Used here for percent encoding
 import readchar  # Library to read single characters of input
+import pprint
 
 import layouts
 import libroku
 
 pool = Pool(50)  # Create async task pool
+pprinter = pprint.PrettyPrinter(indent=4)
 
 
 def on_error(error):  # Called when an error occurs in HTTP requests
@@ -72,12 +74,46 @@ def chooselayout(arg=None):
         print("Invalid selection.")
 
 
+def viewlayout(view):
+    global layout
+    splitarg = view.split()
+    valuefound = False
+    if len(splitarg) > 1:
+        if splitarg[0] == "find":
+            findkw = splitarg[1]
+            for key, value in layout.buttonmap.items():
+                if value.lower() == findkw.lower():
+                    print("{0} is bound to {1}".format(key, value))
+                    valuefound = True
+            if not valuefound:
+                try:
+                    print("{0} is triggered by {1}".format(layout.buttonmap[findkw], findkw))
+                except KeyError:
+                    pass
+
+    elif len(view) > 0:
+        if not view.startswith("layouts."):
+            view2 = "layouts.{0}".format(view)
+        else:
+            view2 = view
+
+        try:
+            vl = layouts.load(view2)
+            pprinter.pprint(vl.buttonmap)
+        except ModuleNotFoundError as e:
+            print("ERR: ModuleNotFoundError - error information below:")
+            print(e)
+    else:
+        pprinter.pprint(layout.buttonmap)
+
+
 commandmap = {
     "setlayout": setlayout,
     "listlayouts": listlayouts,
     "search": search,
     "commands": commands,
     "chooselayout": chooselayout,
+    "viewlayout": viewlayout,
 }
 # End of functions for command mode
 
