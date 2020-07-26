@@ -45,7 +45,7 @@ def setlayout(new):
 
 
 def listlayouts(arg=None):
-    print("Valid layouts: {0}".format(layouts.getlist()))
+    print("Valid layouts: {0}".format(", ".join(map(str, layouts.getlist()))))
     print("Use :setlayout to change layouts.")
 
 
@@ -53,10 +53,15 @@ def search(keywords):
     libroku.sendsearch(pool, host, keywords, on_error)
 
 
+def commands(arg=None):
+    print("Valid commands: {0}".format(", ".join(map(str, commandmap.keys()))))
+
+
 commandmap = {
     "setlayout": setlayout,
     "listlayouts": listlayouts,
     "search": search,
+    "commands": commands,
 }
 # End of functions for command mode
 
