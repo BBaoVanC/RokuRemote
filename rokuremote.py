@@ -57,7 +57,7 @@ def commands(arg=None):
     print("Valid commands: {0}".format(", ".join(map(str, commandmap.keys()))))
 
 
-def layout(arg=None):
+def chooselayout(arg=None):
     laylist = layouts.getlist()
     print("Type the number corresponding to the layout you want to use:")
     for a in range(len(laylist)):
@@ -77,7 +77,7 @@ commandmap = {
     "listlayouts": listlayouts,
     "search": search,
     "commands": commands,
-    "layout": layout,
+    "chooselayout": chooselayout,
 }
 # End of functions for command mode
 
