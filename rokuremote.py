@@ -12,7 +12,6 @@ from multiprocessing.dummy import Pool  # Used for async requests
 
 import urllib  # Used here for percent encoding
 import readchar  # Library to read single characters of input
-import time  # Used for pauses
 
 import layouts
 import libroku
@@ -24,6 +23,43 @@ host = input("Enter IP of the Roku you want to control: ")  # Ask for the IP of 
 def on_error(error):  # Called when an error occurs in HTTP requests
     print("POST ERROR")
     print(error)
+
+
+# Functions for command mode
+def setlayout(new):
+    if len(new) > 0:
+        if not new.startswith("layouts."):
+            args2 = "layouts.{0}".format(new)
+        else:
+            args2 = new
+        try:
+            global layout
+            layout = layouts.load(args2)
+        except ModuleNotFoundError as e:
+            print("ERR: ModuleNotFoundError - error information below:")
+            print(e)
+
+    else:
+        print("ERR: No layout specified.")
+        print("Current layout: {0}".format(layout.name))
+        print("List all layouts by typing :listlayouts")
+
+
+def listlayouts(arg=None):
+    print("Valid layouts: {0}".format(layouts.getlist()))
+    print("Use :setlayout to change layouts.")
+
+
+def search(keywords):
+    libroku.sendsearch(pool, host, keywords, on_error)
+
+
+commandmap = {
+    "setlayout": setlayout,
+    "listlayouts": listlayouts,
+    "search": search,
+}
+# End of functions for command mode
 
 
 run = True  # Variable that says if the program should continue running
@@ -46,34 +82,9 @@ while run:  # Main program loop
 
         if cmd == "q" or cmd == "quit":
             run = False  # Prevent the main program loop from executing again (ending the program)
-        elif cmd == "setlayout":
-            if len(args) > 0:
-                if not args.startswith("layouts."):
-                    args2 = "layouts.{0}".format(args)
-                else:
-                    args2 = args
-                try:
-                    layout = layouts.load(args2)
-                except ModuleNotFoundError as e:
-                    print("ERR: ModuleNotFoundError - error information below:")
-                    print(e)
-            else:
-                print("ERR: No layout specified.")
-                print("Current layout: {0}".format(layout.name))
-                print("List all layouts by typing :layouts")
 
-        elif cmd == "layouts":
-            print("Valid layouts: {0}".format(layouts.getlist()))
-            print("Use :setlayout to change layouts.")
-
-        elif cmd == "search":
-            libroku.sendsearch(pool, host, args, on_error)
-
-        elif cmd == "norm":
-            if len(args) > 0:
-                sendseq(args)
-            else:
-                print("ERR: No normal mode sequence specified")
+        elif cmd in commandmap.keys():
+            commandmap[cmd](args)
 
         else:
             print("ERR: Invalid command.")
