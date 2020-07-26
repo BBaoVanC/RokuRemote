@@ -17,7 +17,6 @@ import layouts
 import libroku
 
 pool = Pool(50)  # Create async task pool
-host = input("Enter IP of the Roku you want to control: ")  # Ask for the IP of the Roku to control
 
 
 def on_error(error):  # Called when an error occurs in HTTP requests
@@ -27,13 +26,13 @@ def on_error(error):  # Called when an error occurs in HTTP requests
 
 # Functions for command mode
 def setlayout(new):
+    global layout
     if len(new) > 0:
         if not new.startswith("layouts."):
             args2 = "layouts.{0}".format(new)
         else:
             args2 = new
         try:
-            global layout
             layout = layouts.load(args2)
         except ModuleNotFoundError as e:
             print("ERR: ModuleNotFoundError - error information below:")
@@ -61,10 +60,17 @@ commandmap = {
 }
 # End of functions for command mode
 
+modemap = {
+    "insert": "-- INSERT MODE (press enter to exit) --",
+    "normal": "-- NORMAL MODE (press q to quit) --",
+    "invalid": "-- INVALID MODE: Please report this error! --",
+}
 
 run = True  # Variable that says if the program should continue running
 mode = "normal"  # Set the mode to normal (default)
 layout = layouts.load("layouts.default")
+host = input("Enter IP of the Roku you want to control: ")  # Ask for the IP of the Roku to control
+
 
 while run:  # Main program loop
     if mode == "command":
@@ -91,12 +97,7 @@ while run:  # Main program loop
         mode = "normal"
 
     else:
-        if mode == "insert":
-            print("-- INSERT MODE (press enter to exit) --")
-        elif mode == "normal":
-            print("-- NORMAL MODE (press q to quit) --")
-        else:
-            print("-- INVALID MODE: Please report this error! --")
+        print(modemap[mode])
         char = readchar.readkey()  # Read a single character
         print("Read: {0}".format(char))
 
@@ -115,6 +116,7 @@ while run:  # Main program loop
                     else:
                         typechar = "LIT_" + pchar
                         libroku.sendbutton(pool, host, "keypress", typechar, on_error)
+
         elif mode == "normal":
             if char == "q":  # Quit command
                 run = False  # Prevent the main program loop from running again
