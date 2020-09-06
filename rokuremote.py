@@ -12,19 +12,19 @@ from multiprocessing.dummy import Pool  # Used for async requests
 
 import urllib  # Used here for percent encoding
 import readchar  # Library to read single characters of input
-import pprint
+import pprint  # Used for pretty printing of button map
 import os
 
 import layouts
 import libroku
 
 pool = Pool(50)  # Create async task pool
-pprinter = pprint.PrettyPrinter(indent=4)
+pprinter = pprint.PrettyPrinter(indent=4)  # Create pretty printer
 
-if not os.path.isfile("defaultlayout.txt"):
+if not os.path.isfile("defaultlayout.txt"):  # if default layout isn't set
     print("defaultlayout.txt not found! Creating...")
-    with open("defaultlayout.txt", "w+") as f:
-        f.write("layouts.default")
+    with open("defaultlayout.txt", "w+") as f:  # open defaultlayout.txt
+        f.write("layouts.default")  # set the default layout to layouts.default
 
 
 def on_error(error):  # Called when an error occurs in HTTP requests
@@ -34,17 +34,17 @@ def on_error(error):  # Called when an error occurs in HTTP requests
 
 # Functions for command mode
 def setlayout(new):
-    global layout
-    if len(new) > 0:
-        if not new.startswith("layouts."):
-            args2 = "layouts.{0}".format(new)
+    global layout  # we want to use the global variable layout (instead of local)
+    if len(new) > 0:  # if a new layout was given
+        if not new.startswith("layouts."):  # if it doesn't start with layouts.
+            args2 = "layouts.{0}".format(new)  # add layouts. to the beginning
         else:
             args2 = new
         try:
-            layout = layouts.load(args2)
-        except ModuleNotFoundError as e:
+            layout = layouts.load(args2)  # try to load the requested layout
+        except ModuleNotFoundError as e:  # if the layout doesn't exist
             print("ERR: ModuleNotFoundError - error information below:")
-            print(e)
+            print(e)  # print the ModuleNotFoundError
 
     else:
         print("ERR: No layout specified.")
@@ -66,57 +66,58 @@ def commands(arg=None):
 
 
 def chooselayout(arg=None):
-    laylist = layouts.getlist()
+    laylist = layouts.getlist()  # get a list of valid layouts
     print("Type the number corresponding to the layout you want to use:")
-    for a in range(len(laylist)):
+    for a in range(len(laylist)):  # list out all the valid layouts
         print("[{0}] {1}".format(a, laylist[a]))
 
-    sel = input("> ")
-    selint = int(sel)
-    if selint in list(range(len(laylist))):
+    sel = input("> ")  # ask which selection
+    selint = int(sel)  # convert the selection to a number
+    if selint in list(range(len(laylist))):  # if it was a valid selection number
         print("Selected: {0}".format(laylist[selint]))
-        setlayout(laylist[selint])
+        setlayout(laylist[selint])  # change the layout
     else:
         print("Invalid selection.")
 
 
 def viewlayout(view):
-    global layout
-    splitarg = view.split()
-    valuefound = False
-    if len(splitarg) > 1:
-        if splitarg[0] == "find":
-            findkw = splitarg[1]
-            for key, value in layout.buttonmap.items():
-                if value.lower() == findkw.lower():
+    global layout  # use the global variable "layout"
+    splitarg = view.split()  # convert arguments to a list
+    valuefound = False  # obviously, we haven't found a match yet
+    if len(splitarg) > 1:  # if more than one argument was given
+        if splitarg[0] == "find":  # if the first argument is 'find'
+            findkw = splitarg[1]  # the argument after find
+            for key, value in layout.buttonmap.items():  # for all the keys in the buttonmap
+                if value.lower() == findkw.lower():  # if the value matches
                     print("{0} is bound to {1}".format(key, value))
-                    valuefound = True
-            if not valuefound:
+                    valuefound = True  # we found a match!
+            if not valuefound:  # if we weren't able to find a match
                 try:
+                    # try to find a match the other direction
                     print("{0} is triggered by {1}".format(layout.buttonmap[findkw], findkw))
-                except KeyError:
+                except KeyError:  # if a match wasn't found the other direction
                     pass
 
-    elif len(view) > 0:
+    elif len(view) > 0:  # if at least one argument was provided
         if not view.startswith("layouts."):
-            view2 = "layouts.{0}".format(view)
+            view2 = "layouts.{0}".format(view)  # add layouts. to beginning
         else:
             view2 = view
 
         try:
-            vl = layouts.load(view2)
-            pprinter.pprint(vl.buttonmap)
-        except ModuleNotFoundError as e:
+            vl = layouts.load(view2)  # load the requested layout
+            pprinter.pprint(vl.buttonmap)  # pretty print the layout buttonmap
+        except ModuleNotFoundError as e:  # if the layout wasn't found
             print("ERR: ModuleNotFoundError - error information below:")
-            print(e)
-    else:
-        pprinter.pprint(layout.buttonmap)
+            print(e)  # print the ModuleNotFoundError
+    else:  # if no arguments were provided
+        pprinter.pprint(layout.buttonmap)  # pretty print the current layout's buttonmap
 
 
 def setdefaultlayout(arg=None):
-    global layout
+    global layout  # use the global variable layout
     with open("defaultlayout.txt", "w") as f:
-        f.write("layouts.{0}".format(layout.name))
+        f.write("layouts.{0}".format(layout.name))  # save the default layout
     print("Default layout set to {0}".format(layout.name))
 
 
@@ -140,9 +141,9 @@ modemap = {
 run = True  # Variable that says if the program should continue running
 mode = "normal"  # Set the mode to normal (default)
 with open("defaultlayout.txt", "r") as f:
-    deflayname = f.readlines()[0].strip()
+    deflayname = f.readlines()[0].strip()  # name of default layout
     print("Loading default layout: {0}".format(deflayname))
-    layout = layouts.load(deflayname)
+    layout = layouts.load(deflayname)  # load the default layout
 host = input("Enter IP of the Roku you want to control: ")  # Ask for the IP of the Roku to control
 
 while run:  # Main program loop
@@ -162,15 +163,15 @@ while run:  # Main program loop
         if cmd == "q" or cmd == "quit":
             run = False  # Prevent the main program loop from executing again (ending the program)
 
-        elif cmd in commandmap.keys():
-            commandmap[cmd](args)
+        elif cmd in commandmap.keys():  # if it's a valid command
+            commandmap[cmd](args)  # pass the arguments to that command
 
         else:
             print("ERR: Invalid command.")
         mode = "normal"
 
     else:
-        print(modemap[mode])
+        print(modemap[mode])  # show the current mode
         char = readchar.readkey()  # Read a single character
         print("Read: {0}".format(char))
 
@@ -178,13 +179,13 @@ while run:  # Main program loop
             if char == "\r" or char == "\n":  # If enter was pressed
                 mode = "normal"
             else:
-                if len(char) == 1 and char.isalpha():
+                if len(char) == 1 and char.isalpha():  # if a letter was pressed
                     typechar = "LIT_" + char
-                    libroku.sendbutton(pool, host, "keypress", typechar, on_error)
+                    libroku.sendbutton(pool, host, "keypress", typechar, on_error)  # type the letter
                 else:
                     pchar = urllib.parse.quote(char)  # Percent encode the character (if needed)
                     print("ENCODED: '{0}'".format(pchar))
-                    if pchar == "%7F" or pchar == "%08":
+                    if pchar == "%7F" or pchar == "%08":  # backspace key
                         libroku.sendbutton(pool, host, "keypress", "Backspace", on_error)
                     else:
                         typechar = "LIT_" + pchar
